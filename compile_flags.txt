@@ -1,0 +1,7 @@
+-std=gnu99
+-I/usr/local/include
+-I/usr/include
+-I/usr/include/freetype2
+-I./include
+-I./build/_deps/webp-src/src
+-I./modell/include
