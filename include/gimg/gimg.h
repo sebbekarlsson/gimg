@@ -1,6 +1,7 @@
 #ifndef LIBGIMG_H
 #define LIBGIMG_H
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {
   GIMG_COLOR_TYPE_RGB,
@@ -17,13 +18,12 @@ typedef enum {
 
 typedef struct {
   char* uri;
-  uint8_t* data_8;
-  uint32_t* data_32;
-  uint16_t* data_16;
+  void* data;
   uint64_t size_bytes;
   int width;
   int height;
   int components;
+  int stride;
   GIMGColorType color_type;
   GIMGColorType color_type_internal;
   GIMGSpecificationType specification_type;
@@ -33,5 +33,6 @@ int gimg_read_from_path(GIMG* image, const char* path);
 
 void gimg_free(GIMG* image, unsigned int completely);
 
+bool gimg_validate(GIMG gimg);
 
 #endif

@@ -1,4 +1,5 @@
 #include <gimg/gimg.h>
+#include <gimg/macros.h>
 
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -15,6 +16,7 @@
 
 #include <jpeglib.h>
 #include <jerror.h>
+#include <stdio.h>
 
 static unsigned int gimg_file_exists(const char *path) {
   return access(path, F_OK) == 0;
@@ -153,20 +155,20 @@ int gimg_read_from_path(GIMG *image, const char *path) {
       fprintf(stderr, "libpng error: %s\n", img.message);
 
     image->components = 4;
-    image->data_32 = img_pixels;
+    image->data = img_pixels;
     image->width = img.width;
     image->height = img.height;
     image->specification_type = GIMG_SPECIFICATION_TYPE_PNG;
 
   } else if (strstr(path, "webp") != 0) {
-    image->data_8 = gimg_load_image_webp(path, &image->width, &image->height,
+    image->data = gimg_load_image_webp(path, &image->width, &image->height,
                                         &image->size_bytes, &image->components,
                                         &image->color_type);
     image->specification_type = GIMG_SPECIFICATION_TYPE_WEBP;
   } else if (strstr(path, "jpg") != 0 || strstr(path, "jpeg") != 0) {
     uint64_t data_size = 0;
     unsigned int type = 0;
-    image->data_8 = gimg_load_jpeg(path, &image->width, &image->height,
+    image->data = gimg_load_jpeg(path, &image->width, &image->height,
                                    &data_size, &_components, &type);
 
     image->components = _components;
@@ -182,18 +184,13 @@ int gimg_read_from_path(GIMG *image, const char *path) {
     }
 
 
-    image->data_8 =
+    image->data =
         stbi_load(path, &image->width, &image->height, &image->components, 0);
     image->specification_type = GIMG_SPECIFICATION_TYPE_UNKNOWN;
   }
 
-  if (image->data_8 == 0 && image->data_32 == 0 && image->data_16 == 0) {
-    fprintf(stderr, "Unable to load %s\n", path);
-    return 0;
-  }
-
-  if (image->width <= 0 || image->height <= 0) {
-    fprintf(stderr, "Unable to load %s (invalid dimensions)\n", path);
+  if (!gimg_validate(*image)) {
+    GIMG_WARN("Unable to load %s\n", path);
     return 0;
   }
 
@@ -203,23 +200,19 @@ int gimg_read_from_path(GIMG *image, const char *path) {
   image->color_type =
       _components >= 4 ? GIMG_COLOR_TYPE_RGBA : GIMG_COLOR_TYPE_RGB;
 
+
+  int nrChannels = OR(image->components, 4);
+  int stride = nrChannels * image->width;
+  stride += (stride % nrChannels) ? (nrChannels - stride % nrChannels) : 0;
+  image->stride = stride;
+
   return 1;
 }
 
 void gimg_free(GIMG *image, unsigned int completely) {
-  if (image->data_8 != 0) {
-    free(image->data_8);
-    image->data_8 = 0;
-  }
-
-  if (image->data_16 != 0) {
-    free(image->data_16);
-    image->data_16 = 0;
-  }
-
-  if (image->data_32 != 0) {
-    free(image->data_32);
-    image->data_32 = 0;
+  if (image->data != 0) {
+    free(image->data);
+    image->data = 0;
   }
 
   if (image->uri != 0) {
@@ -238,4 +231,31 @@ void gimg_free(GIMG *image, unsigned int completely) {
     free(image);
     image = 0;
   }
+}
+
+
+int gimg_save(GIMG image, const char *path) {
+  if (!gimg_validate(image)) {
+    GIMG_WARN("Image is not valid.\n");
+    return 0;
+  }
+
+  if (!image.stride) {
+    int nrChannels = OR(image.components, 4);
+    int stride = nrChannels * image.width;
+    stride += (stride % nrChannels) ? (nrChannels - stride % nrChannels) : 0;
+    image.stride = stride;
+  }
+
+  stbi_flip_vertically_on_write(1);
+
+  return stbi_write_png(path, image.width, image.height, 4, image.data,
+                        image.stride);
+}
+
+
+bool gimg_validate(GIMG gimg) {
+  if (gimg.width <= 0 || gimg.height <= 0) return false;
+  if (gimg.data == 0) return false;
+  return true;
 }
