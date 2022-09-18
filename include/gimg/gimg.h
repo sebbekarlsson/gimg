@@ -35,4 +35,7 @@ void gimg_free(GIMG* image, unsigned int completely);
 
 bool gimg_validate(GIMG gimg);
 
+int gimg_save(GIMG image, const char *path);
+
+
 #endif
