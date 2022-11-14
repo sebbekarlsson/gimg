@@ -2,6 +2,7 @@
 #define LIBGIMG_H
 #include <stdint.h>
 #include <stdbool.h>
+#include <gimg/pixel.h>
 
 typedef enum {
   GIMG_COLOR_TYPE_RGB,
@@ -36,6 +37,13 @@ void gimg_free(GIMG* image, unsigned int completely);
 bool gimg_validate(GIMG gimg);
 
 int gimg_save(GIMG image, const char *path);
+
+int gimg_make(GIMG* img, int width, int height);
+
+int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel);
+
+int gimg_fill(GIMG* img, GIMGPixel pixel);
+
 
 
 #endif

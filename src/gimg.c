@@ -259,3 +259,49 @@ bool gimg_validate(GIMG gimg) {
   if (gimg.data == 0) return false;
   return true;
 }
+
+int gimg_make(GIMG* img, int width, int height) {
+  if (width <= 0 || height <= 0) return 0;
+
+  img->width = width;
+  img->height = height;
+  img->components = 4;
+
+  int64_t nr_elements = img->width * img->height * img->components;
+  img->size_bytes = (nr_elements * sizeof(uint32_t));
+  img->data = (uint32_t*)calloc(nr_elements, sizeof(uint32_t));
+
+  return img->data != 0;
+}
+
+int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel) {
+  if (!img) return 0;
+  if (!img->data) return 0;
+  if (!gimg_validate(*img)) return 0;
+
+
+  x = x % img->width;
+  y = y % img->height;
+  int max_idx = (img->width * img->height);
+  int idx = (x + img->width * y) % max_idx;
+  GIMGPixel* color = &(((GIMGPixel*)img->data)[idx]);
+
+  *color = pixel;
+
+  return 1;
+}
+
+int gimg_fill(GIMG* img, GIMGPixel pixel) {
+  if (!img) return 0;
+  if (!gimg_validate(*img)) return 0;
+
+
+
+  for (int x = 0; x < img->width; x++) {
+    for (int y = 0; y < img->height; y++) {
+      gimg_set_pixel(img, x, y, pixel);
+    }
+  }
+
+  return 1;
+}
