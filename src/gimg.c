@@ -307,6 +307,22 @@ int gimg_get_pixel(GIMG* img, int x, int y, GIMGPixel* out) {
   return 1;
 }
 
+int gimg_get_pixel_rgb(GIMG* img, int x, int y, GIMGPixelRGB* out) {
+  if (!img) return 0;
+  if (!out) return 0;
+  if (!img->data) return 0;
+  if (!gimg_validate(*img)) return 0;
+
+
+  x = x % img->width;
+  y = y % img->height;
+  int max_idx = (img->width * img->height);
+  int idx = (x + img->width * y) % max_idx;
+  *out = (((GIMGPixelRGB*)img->data)[idx]);
+
+  return 1;
+}
+
 int gimg_get_average_pixel(GIMG* img, GIMGPixel* out) {
   if (!img) return 0;
   if (!out) return 0;
@@ -322,13 +338,24 @@ int gimg_get_average_pixel(GIMG* img, GIMGPixel* out) {
 
   for (int x = 0; x < img->width; x++) {
     for (int y = 0; y < img->height; y++) {
-      GIMGPixel pixel = {0};
-      gimg_get_pixel(img, x, y, &pixel);
 
-      r += pixel.r;
-      g += pixel.g;
-      b += pixel.b;
-      a += pixel.a;
+      if (img->components <= 3) {
+        GIMGPixelRGB pixel = {0};
+        gimg_get_pixel_rgb(img, x, y, &pixel);
+
+        r += pixel.r;
+        g += pixel.g;
+        b += pixel.b;
+        a += 255.0f;
+      } else {
+        GIMGPixel pixel = {0};
+        gimg_get_pixel(img, x, y, &pixel);
+
+        r += pixel.r;
+        g += pixel.g;
+        b += pixel.b;
+        a += 255.0f;
+      }
 
       count += 1.0f;
     }
