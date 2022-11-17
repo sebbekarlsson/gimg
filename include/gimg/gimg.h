@@ -41,8 +41,15 @@ int gimg_save(GIMG image, const char *path);
 int gimg_make(GIMG* img, int width, int height);
 
 int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel);
+int gimg_get_pixel(GIMG* gimg, int x, int y, GIMGPixel* out);
+int gimg_get_average_pixel(GIMG* gimg, GIMGPixel* out);
 
 int gimg_fill(GIMG* img, GIMGPixel pixel);
+
+
+
+
+
 
 
 

@@ -291,11 +291,68 @@ int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel) {
   return 1;
 }
 
-int gimg_fill(GIMG* img, GIMGPixel pixel) {
+int gimg_get_pixel(GIMG* img, int x, int y, GIMGPixel* out) {
   if (!img) return 0;
+  if (!out) return 0;
+  if (!img->data) return 0;
   if (!gimg_validate(*img)) return 0;
 
 
+  x = x % img->width;
+  y = y % img->height;
+  int max_idx = (img->width * img->height);
+  int idx = (x + img->width * y) % max_idx;
+  *out = (((GIMGPixel*)img->data)[idx]);
+
+  return 1;
+}
+
+int gimg_get_average_pixel(GIMG* img, GIMGPixel* out) {
+  if (!img) return 0;
+  if (!out) return 0;
+  if (!img->data) return 0;
+  if (!gimg_validate(*img)) return 0;
+
+
+  float r = 0.0f;
+  float g = 0.0f;
+  float b = 0.0f;
+  float a = 0.0f;
+  float count = 0.0f;
+
+  for (int x = 0; x < img->width; x++) {
+    for (int y = 0; y < img->height; y++) {
+      GIMGPixel pixel = {0};
+      gimg_get_pixel(img, x, y, &pixel);
+
+      r += pixel.r;
+      g += pixel.g;
+      b += pixel.b;
+      a += pixel.a;
+
+      count += 1.0f;
+    }
+  }
+
+  if (count <= 0.0f) return 0;
+
+  r /= count;
+  g /= count;
+  b /= count;
+  a /= count;
+
+
+  out->r = r;
+  out->g = g;
+  out->b = b;
+  out->a = a;
+
+  return 1;
+}
+
+int gimg_fill(GIMG* img, GIMGPixel pixel) {
+  if (!img) return 0;
+  if (!gimg_validate(*img)) return 0;
 
   for (int x = 0; x < img->width; x++) {
     for (int y = 0; y < img->height; y++) {
