@@ -24,6 +24,14 @@ int main(int argc, char* argv[]) {
   gimg_read_from_path(&gimg, argv[1]);
 
 
+  VEC4Buffer pixels = {0};
+  if (gimg_get_pixels_as_vec4(&gimg, &pixels)) {
+
+    for (int64_t i = 0; i < pixels.length; i++) {
+      VEC4_PRINT_PRECISE(pixels.items[i]);
+    }
+  }
+
  printf("width: %d\n", gimg.width);
  printf("height: %d\n", gimg.height);
  printf("components: %d\n", gimg.components);

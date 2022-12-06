@@ -303,6 +303,24 @@ Vector4 gimg_get_pixel_vec4(GIMG* img, int x, int y) {
   return color;
 }
 
+int gimg_get_pixels_as_vec4(GIMG* img, VEC4Buffer* pixels) {
+  if (!img || !pixels) return 0;
+  if (!img->data) return 0;
+  if (!gimg_validate(*img)) return 0;
+
+  if (!pixels->initialized) {
+    vec4_buffer_init(pixels);
+  }
+
+
+  for (int x = 0; x < img->width; x++) {
+    for (int y = 0; y < img->height; y++) {
+      vec4_buffer_push(pixels, gimg_get_pixel_vec4(img, x, y));
+    }
+  }
+
+  return pixels->items != 0 && pixels->length > 0;
+}
 
 int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel) {
   if (!img) return 0;

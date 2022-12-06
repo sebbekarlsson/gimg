@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <gimg/pixel.h>
 #include <vec3/vec3.h>
+#include <vec3/vector4_buffer.h>
 
 typedef enum {
   GIMG_COLOR_TYPE_RGB,
@@ -48,6 +49,8 @@ int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel);
 int gimg_get_pixel(GIMG* gimg, int x, int y, GIMGPixel* out);
 int gimg_get_pixel_rgb(GIMG* gimg, int x, int y, GIMGPixelRGB* out);
 int gimg_get_average_pixel(GIMG* gimg, GIMGPixel* out);
+
+int gimg_get_pixels_as_vec4(GIMG* gimg, VEC4Buffer* pixels);
 
 int gimg_fill(GIMG* img, GIMGPixel pixel);
 
