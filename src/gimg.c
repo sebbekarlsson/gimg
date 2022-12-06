@@ -274,6 +274,36 @@ int gimg_make(GIMG* img, int width, int height) {
   return img->data != 0;
 }
 
+Vector4 gimg_get_pixel_vec4(GIMG* img, int x, int y) {
+  if (!img) return VEC41(0);
+  if (!img->data) return VEC41(0);
+  if (!gimg_validate(*img)) return VEC41(0);
+
+  Vector4 color = VEC41(0.0f);
+
+
+  if (img->components <= 3) {
+      GIMGPixelRGB pixel = {0};
+      gimg_get_pixel_rgb(img, x, y, &pixel);
+
+      color.x = pixel.r;
+      color.y = pixel.g;
+      color.z = pixel.b;
+      color.w = 255.0f;
+  } else {
+      GIMGPixel pixel = {0};
+      gimg_get_pixel(img, x, y, &pixel);
+
+      color.x = pixel.r;
+      color.y = pixel.g;
+      color.z = pixel.b;
+      color.w = pixel.a;
+  }
+
+  return color;
+}
+
+
 int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel) {
   if (!img) return 0;
   if (!img->data) return 0;

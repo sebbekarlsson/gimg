@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <gimg/pixel.h>
+#include <vec3/vec3.h>
 
 typedef enum {
   GIMG_COLOR_TYPE_RGB,
@@ -40,6 +41,8 @@ int gimg_save(GIMG image, const char *path);
 
 int gimg_make(GIMG* img, int width, int height);
 
+
+Vector4 gimg_get_pixel_vec4(GIMG* gimg, int x, int y);
 int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel);
 int gimg_get_pixel(GIMG* gimg, int x, int y, GIMGPixel* out);
 int gimg_get_pixel_rgb(GIMG* gimg, int x, int y, GIMGPixelRGB* out);

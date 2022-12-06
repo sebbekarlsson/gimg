@@ -4,4 +4,6 @@
 -I/usr/include/freetype2
 -I./include
 -I./build/_deps/webp-src/src
--I./modell/include
+
+-I./build/_deps/vec3_static-src/include
+-I./build/_deps/cglm-src/include

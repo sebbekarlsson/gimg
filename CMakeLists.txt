@@ -11,6 +11,15 @@ add_executable(gimg_e ${sourcefiles})
 include(FetchContent)
 
 
+if (NOT TARGET vec3_static)
+  FetchContent_Declare(vec3_static
+    URL /home/ianertson/workspace/vec3
+    )
+
+  FetchContent_MakeAvailable(vec3_static)
+endif()
+
+
   if (NOT TARGET webp)
   FetchContent_Declare(
     webp
@@ -27,6 +36,8 @@ set(gimg_deps
   webpdecoder
   jpeg
   png
+  vec3_static
+  cglm
   )
 
 
