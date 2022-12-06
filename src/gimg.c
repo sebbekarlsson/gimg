@@ -321,6 +321,32 @@ int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel) {
   return 1;
 }
 
+int gimg_set_pixel_vec4(GIMG* img, int x, int y, Vector4 pix) {
+  if (!img) return 0;
+  if (!img->data) return 0;
+  if (!gimg_validate(*img)) return 0;
+
+  if (img->components <= 3) {
+    x = x % img->width;
+    y = y % img->height;
+    int max_idx = (img->width * img->height);
+    int idx = (x + img->width * y) % max_idx;
+    GIMGPixelRGB* color = &(((GIMGPixelRGB*)img->data)[idx]);
+    GIMGPixelRGB pixel = (GIMGPixelRGB){ .r = (uint8_t)pix.x, .g = (uint8_t)pix.y, .b = (uint8_t)pix.z };
+    *color = pixel;
+  } else {
+    x = x % img->width;
+    y = y % img->height;
+    int max_idx = (img->width * img->height);
+    int idx = (x + img->width * y) % max_idx;
+    GIMGPixel* color = &(((GIMGPixel*)img->data)[idx]);
+    GIMGPixel pixel = (GIMGPixel){ .r = (uint8_t)pix.x, .g = (uint8_t)pix.y, .b = (uint8_t)pix.z, .a = (uint8_t)pix.w };
+    *color = pixel;
+  }
+
+  return 1;
+}
+
 int gimg_get_pixel(GIMG* img, int x, int y, GIMGPixel* out) {
   if (!img) return 0;
   if (!out) return 0;
