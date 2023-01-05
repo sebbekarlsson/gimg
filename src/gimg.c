@@ -234,7 +234,7 @@ void gimg_free(GIMG *image, unsigned int completely) {
 }
 
 
-int gimg_save(GIMG image, const char *path) {
+int gimg_save(GIMG image, const char *path, bool flip) {
   if (!gimg_validate(image)) {
     GIMG_WARN("Image is not valid.\n");
     return 0;
@@ -247,7 +247,13 @@ int gimg_save(GIMG image, const char *path) {
     image.stride = stride;
   }
 
-  stbi_flip_vertically_on_write(1);
+  if (flip) {
+    stbi_flip_vertically_on_write(1);
+  }
+
+  if (strstr(path, ".jpg") != 0) {
+    return stbi_write_jpg(path, image.width, image.height, image.components, image.data, 0);
+  }
 
   return stbi_write_png(path, image.width, image.height, 4, image.data,
                         image.stride);
@@ -260,12 +266,12 @@ bool gimg_validate(GIMG gimg) {
   return true;
 }
 
-int gimg_make(GIMG* img, int width, int height) {
+int gimg_make(GIMG* img, int width, int height, int components) {
   if (width <= 0 || height <= 0) return 0;
 
   img->width = width;
   img->height = height;
-  img->components = 4;
+  img->components = components;
 
   int64_t nr_elements = img->width * img->height * img->components;
   img->size_bytes = (nr_elements * sizeof(uint32_t));
@@ -462,4 +468,39 @@ int gimg_fill(GIMG* img, GIMGPixel pixel) {
   }
 
   return 1;
+}
+
+
+int gimg_downscale(GIMG image, float scale, const char *out_path) {
+  if (!gimg_validate(image)) return 0;
+  if (scale <= 0.0f) return 0;
+  if (!out_path) return 0;
+
+
+  int w = image.width;
+  int h = image.height;
+
+  int dest_w = (int)roundf(w * scale);
+  int dest_h = (int)roundf(h * scale);
+
+  if (dest_w <= 0 || dest_h <= 0) {
+    fprintf(stderr, "Unable to downscale to `%dx%d`.\n", dest_w, dest_h);
+  }
+
+  GIMG new_image;
+  gimg_make(&new_image, dest_w, dest_h, 3);
+
+
+  for (int x = 0; x < w; x++) {
+    for (int y = 0; y < h; y++) {
+
+      float u = (float)x / (float)w;
+      float v = (float)y / (float)h;
+      
+      Vector4 px = gimg_get_pixel_vec4(&image, x, y);
+      gimg_set_pixel_vec4(&new_image, u * dest_w, v * dest_h, px);
+    }
+  }
+
+  return gimg_save(new_image, out_path, false);
 }

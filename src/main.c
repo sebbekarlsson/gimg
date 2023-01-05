@@ -1,49 +1,104 @@
+#include <gimg/cliparse.h>
+#include <gimg/gimg.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <gimg/gimg.h>
+#include <dirent.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <stdbool.h>
+#include <limits.h>
 
-int main(int argc, char* argv[]) {
+typedef struct {
+  const char* ext;
+  const char* dirname;
+  float scale;
+} DownscaleArgs;
+
+typedef void (*FileCallback)(const char* path, DownscaleArgs args);
+
+static bool is_dir(const char *path) {
+   struct stat statbuf;
+   if (stat(path, &statbuf) != 0)
+       return 0;
+   return S_ISDIR(statbuf.st_mode);
+}
+
+static int listdir(const char *path, FileCallback callback, DownscaleArgs args) {
+    struct dirent *entry;
+    DIR *dp;
+
+    dp = opendir(path);
+    if (dp == NULL) {
+        perror("opendir: Path does not exist or could not be read.");
+        return -1;
+    }
+
+    while ((entry = readdir(dp))) {
+      const char* name = entry->d_name;
+      if (entry->d_type != DT_DIR && !(strstr(name, "small")) && (strstr(name, ".jpg") || strstr(name, ".jpeg") || strstr(name, ".png"))) {
+
+	char fullpath[PATH_MAX];
+
+	if (path[strlen(path)-1] != '/' && name[0] != '/') { 
+	  sprintf(fullpath, "%s/%s", path, name);
+	} else {
+	  sprintf(fullpath, "%s%s", path, name);
+	}
+	callback(fullpath, args);
+      }
+    }
+
+    closedir(dp);
+    return 0;
+}
+
+static void downscale_callback(const char *path, DownscaleArgs args) {
+
+  GIMG image = {0};
+   if (!gimg_read_from_path(&image, path)) return;
+
+  int64_t slen = strlen(path);
+  char* dot = strrchr(path, '.');
+
+  int64_t len = dot ? (dot - path) : strlen(path);
+  char newname[PATH_MAX];
+  memcpy(&newname[0], &path[0], len * sizeof(char));
+
+  int64_t ext_len = slen - len;
+  char ext[ext_len];
+  memcpy(&ext[0], dot, ext_len);
+
+
+  char newfull[PATH_MAX];
+  sprintf(newfull, "%s_small%s", newname, args.ext ? args.ext : ext);
+
+  if (gimg_downscale(image, args.scale, newfull)) {
+    printf("Wrote `%s`\n", newfull);
+  }
+}
+
+static int downscale(const char* ext, const char *dir, float scale) {
+  listdir(dir, downscale_callback, (DownscaleArgs){ .dirname = dir, .scale = scale, .ext = ext });
+  return 1;
+}
+
+int main(int argc, char *argv[]) {
   if (argc <= 1) {
     fprintf(stderr, "Please specify input file.\n");
   }
 
-  #if 0
-  GIMG img = {0};
-  gimg_make(&img, 640, 480);
+  if (
+      cliparse_has_arg(argc, argv, "--downscale") &&
+      cliparse_has_arg(argc, argv, "--dir")
+  ) {
+    const char* dir = cliparse_get_arg_string(argc, argv, "--dir");
+    const char* ext = cliparse_get_arg_string(argc, argv, "--ext");
+    float scale = cliparse_get_arg_float(argc, argv, "--downscale");
 
-  gimg_fill(&img, (GIMGPixel){ 0.0f, 0.0f, 0.0f, 255.0f });
-
-  if (!gimg_set_pixel(&img, 640/2, 480/2, (GIMGPixel){ 255.0f, 0.0f, 0.0f, 255.0f })) {
-    printf("Could not set pixel!\n");
+    if (!downscale(ext, dir, scale)) return 1;
+    return 0;
   }
-
-  gimg_save(img, "image.png");
-#endif
-
-  GIMG gimg = {0};
-  gimg_read_from_path(&gimg, argv[1]);
-
-
-  VEC4Buffer pixels = {0};
-  if (gimg_get_pixels_as_vec4(&gimg, &pixels)) {
-
-    for (int64_t i = 0; i < pixels.length; i++) {
-      VEC4_PRINT_PRECISE(pixels.items[i]);
-    }
-  }
-
- printf("width: %d\n", gimg.width);
- printf("height: %d\n", gimg.height);
- printf("components: %d\n", gimg.components);
-
- GIMGPixel avg = {0};
-
-
- gimg_get_average_pixel(&gimg, &avg);
-
- printf("Average color: (%d, %d, %d, %d)\n", avg.r, avg.g, avg.b, avg.a);
-
-
 
   return 0;
 }

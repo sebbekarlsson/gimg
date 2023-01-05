@@ -32,15 +32,17 @@ typedef struct {
   GIMGSpecificationType specification_type;
 } GIMG;
 
-int gimg_read_from_path(GIMG* image, const char* path);
+int gimg_read_from_path(GIMG *image, const char *path);
+
+int gimg_downscale(GIMG image, float scale, const char* out_path);
 
 void gimg_free(GIMG* image, unsigned int completely);
 
 bool gimg_validate(GIMG gimg);
 
-int gimg_save(GIMG image, const char *path);
+int gimg_save(GIMG image, const char *path, bool flip);
 
-int gimg_make(GIMG* img, int width, int height);
+int gimg_make(GIMG* img, int width, int height, int components);
 
 
 Vector4 gimg_get_pixel_vec4(GIMG* gimg, int x, int y);
