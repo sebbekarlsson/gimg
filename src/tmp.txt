@@ -53,7 +53,8 @@ static uint8_t *gimg_get_file_bytes(const char *filepath, uint32_t *len) {
 
 static uint8_t *gimg_load_jpeg(const char *file_path, int *x, int *y,
                               uint64_t *data_size, int *channels,
-			       GIMGColorType *type, int* stride) {
+                              GIMGColorType *type) {
+  uint8_t *rowptr[1];
   struct jpeg_decompress_struct info;
   struct jpeg_error_mgr err;
 
@@ -70,44 +71,37 @@ static uint8_t *gimg_load_jpeg(const char *file_path, int *x, int *y,
   jpeg_stdio_src(&info, file);
   jpeg_read_header(&info, TRUE);
 
+  
   jpeg_start_decompress(&info);
 
   *x = info.output_width;
   *y = info.output_height;
-
-  int comps = info.num_components;
-  if (comps <= 0) comps = info.output_components;
-  if (comps <= 0) comps = 3;
-
-  *channels = comps;
+  *channels = info.num_components;
   *type = GIMG_COLOR_TYPE_RGB;
   if (*channels == 4) *type = GIMG_COLOR_TYPE_RGBA;
 
-  *data_size = (*x) * (*y) * comps;
 
-  *stride = comps * info.output_width;
+  *data_size = (*x) * (*y) * (*channels);
 
+  int row_stride = info.output_width * info.output_components;
 
-  uint8_t* jdata = (unsigned char *)calloc(*data_size, sizeof(uint8_t));
+  uint8_t* mydata = (uint8_t*)calloc(*data_size, sizeof(uint8_t));
+  
+  JSAMPARRAY jdata = (*info.mem->alloc_sarray)((j_common_ptr)&info, JPOOL_IMAGE, row_stride, 1);//(unsigned char *)calloc(*data_size, sizeof(unsigned char));
+
   int64_t i = 0;
   while (info.output_scanline < info.output_height)  // loop
   {
-    uint8_t* ptr = (unsigned char *)jdata +
-      comps * info.output_width * info.output_scanline;
-
-
-    // NOTE:
-    // there is a bug where this function emits uninitialized bytes.
-    // So that's why valgrind is complaining, and I can't do anything
-    // about it since it's a third-party library.
-    jpeg_read_scanlines(&info, &ptr, 1);
+    jpeg_read_scanlines(&info, jdata, 1);
+    memcpy(&mydata[i * row_stride], &jdata[0], row_stride * sizeof(uint8_t));
+    i++;
   }
 
   jpeg_finish_decompress(&info);
   jpeg_destroy_decompress(&info);
   fclose(file);
 
-  return jdata;
+  return mydata;
 }
 
 static uint8_t *gimg_load_image_webp(const char *file_path, int *x, int *y,
@@ -131,16 +125,6 @@ static uint8_t *gimg_load_image_webp(const char *file_path, int *x, int *y,
 }
 
 int gimg_read_from_path(GIMG *image, const char *path) {
-  image->data = 0;
-  image->size_bytes = 0;
-  image->stride = 0;
-  image->width = 0;
-  image->height = 0;
-  image->components = 0;
-  image->color_type = 0;
-  image->color_type_internal = 0;
-  image->uri = 0;
-  
   if (gimg_file_exists(path) == 0) {
     //fprintf(stderr, "No such file %s\n", path);
     return 0;
@@ -181,6 +165,7 @@ int gimg_read_from_path(GIMG *image, const char *path) {
     image->width = img.width;
     image->height = img.height;
     image->specification_type = GIMG_SPECIFICATION_TYPE_PNG;
+    //    image->size_bytes = sizeof(uint32_t) * img.width * img.height; 
 
   } else if (strstr(path, "webp") != 0) {
     image->data = gimg_load_image_webp(path, &image->width, &image->height,
@@ -191,7 +176,7 @@ int gimg_read_from_path(GIMG *image, const char *path) {
     uint64_t data_size = 0;
     unsigned int type = 0;
     image->data = gimg_load_jpeg(path, &image->width, &image->height,
-				 &data_size, &_components, &type, &image->stride);
+                                   &data_size, &_components, &type);
 
     image->components = _components;
     image->specification_type = GIMG_SPECIFICATION_TYPE_JPG;
@@ -222,18 +207,17 @@ int gimg_read_from_path(GIMG *image, const char *path) {
   image->color_type =
       _components >= 4 ? GIMG_COLOR_TYPE_RGBA : GIMG_COLOR_TYPE_RGB;
 
-  if (image->stride <= 0) {
-    int nrChannels = OR(image->components, 4);
-    int stride = nrChannels * image->width;
-    stride += (stride % nrChannels) ? (nrChannels - stride % nrChannels) : 0;
-    image->stride = stride;
-  }
+
+  int nrChannels = OR(image->components, 4);
+  int stride = nrChannels * image->width;
+  stride += (stride % nrChannels) ? (nrChannels - stride % nrChannels) : 0;
+  image->stride = stride;
 
   if (image->size_bytes <= 0) {
     int64_t nr_elements = image->width * image->height * image->components;
-    image->size_bytes = (nr_elements * sizeof(uint8_t));
+    image->size_bytes = (nr_elements * sizeof(uint32_t));
   }
-
+  
   return 1;
 }
 
@@ -261,6 +245,7 @@ void gimg_free(GIMG *image, unsigned int completely) {
   }
 }
 
+
 int gimg_save(GIMG image, const char *path, bool flip) {
   if (!gimg_validate(image)) {
     GIMG_WARN("Image is not valid.\n");
@@ -286,33 +271,6 @@ int gimg_save(GIMG image, const char *path, bool flip) {
   return stbi_write_png(path, image.width, image.height, components, image.data,
                         image.stride);
 }
-/*
-
-int gimg_save(GIMG image, const char *path, bool flip) {
-  if (!gimg_validate(image)) {
-    GIMG_WARN("Image is not valid.\n");
-    return 0;
-  }
-
-  
-  if (!image.stride) {
-    int nrChannels = OR(image.components, 4);
-    int stride = nrChannels * image.width;
-    stride += (stride % nrChannels) ? (nrChannels - stride % nrChannels) : 0;
-    image.stride = stride;
-  }
-
-  if (flip) {
-    stbi_flip_vertically_on_write(1);
-  }
-
-  if (strstr(path, ".jpg") != 0) {
-    return stbi_write_jpg(path, image.width, image.height, image.components, image.data, 0);
-  }
-
-  return stbi_write_png(path, image.width, image.height, 4, image.data,
-                        image.stride);
-			}*/
 
 
 bool gimg_validate(GIMG gimg) {
