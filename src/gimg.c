@@ -1,5 +1,6 @@
 #include <gimg/gimg.h>
 #include <gimg/macros.h>
+#include <gimg/serialize.h>
 
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -89,7 +90,6 @@ static uint8_t *gimg_load_jpeg(const char *file_path, int *x, int *y,
 
 
   uint8_t* jdata = (unsigned char *)calloc(*data_size, sizeof(uint8_t));
-  int64_t i = 0;
   while (info.output_scanline < info.output_height)  // loop
   {
     uint8_t* ptr = (unsigned char *)jdata +
@@ -146,6 +146,10 @@ int gimg_read_from_path(GIMG *image, const char *path) {
     return 0;
   }
   int _components = 4;
+
+  if (strstr(path, ".gimg") != 0) {
+    return gimg_deserialize_from_path(image, path);
+  }
 
   if (strstr(path, "png") != 0) {
     png_image img = {0};
