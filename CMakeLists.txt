@@ -48,8 +48,8 @@ add_library(gimg SHARED ${sourcefiles})
 add_library(gimg_static STATIC ${sourcefiles})
 
 target_compile_options(gimg_e PRIVATE -g -Wall)
-target_compile_options(gimg PRIVATE -g -Wall)
-target_compile_options(gimg_static PRIVATE -g -Wall)
+target_compile_options(gimg PRIVATE -Wall)
+target_compile_options(gimg_static PRIVATE -Wall)
 
 target_link_libraries(gimg PUBLIC ${gimg_deps})
 target_link_libraries(gimg_e PUBLIC ${gimg_deps})
