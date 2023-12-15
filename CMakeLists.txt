@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.20)
 
 project(gimg)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL ${CMAKE_CURRENT_SOURCE_DIR}/)
+set(COMMANDS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json)
+
+if (EXISTS ${COMMANDS_FILE})
+  file(COPY ${COMMANDS_FILE} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/)
+endif()
+
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 file(GLOB sourcefiles ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
@@ -11,12 +19,12 @@ add_executable(gimg_e ${sourcefiles})
 include(FetchContent)
 
 
-if (NOT TARGET vec3_static)
-  FetchContent_Declare(vec3_static
-    URL /home/ianertson/workspace/vec3
+if (NOT TARGET mif_static)
+  FetchContent_Declare(mif_static
+    URL /home/ianertson/workspace/mif
     )
 
-  FetchContent_MakeAvailable(vec3_static)
+  FetchContent_MakeAvailable(mif_static)
 endif()
 
 
@@ -36,7 +44,7 @@ set(gimg_deps
   webpdecoder
   jpeg
   png
-  vec3_static
+  mif_static
   cglm
   )
 

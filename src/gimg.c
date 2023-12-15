@@ -1,6 +1,7 @@
 #include <gimg/gimg.h>
 #include <gimg/macros.h>
 #include <gimg/serialize.h>
+#include <mif/linear/vector4/all.h>
 
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -368,19 +369,19 @@ Vector4 gimg_get_pixel_vec4(GIMG* img, int x, int y) {
   return color;
 }
 
-int gimg_get_pixels_as_vec4(GIMG* img, VEC4Buffer* pixels) {
+int gimg_get_pixels_as_vec4(GIMG* img, Vector4Buffer* pixels) {
   if (!img || !pixels) return 0;
   if (!img->data) return 0;
   if (!gimg_validate(*img)) return 0;
 
   if (!pixels->initialized) {
-    vec4_buffer_init(pixels);
+    mif_Vector4_buffer_init(pixels, (MifBufferConfig){ .capacity = img->width * img->height * img->components * 4 * 2 });
   }
 
 
   for (int x = 0; x < img->width; x++) {
     for (int y = 0; y < img->height; y++) {
-      vec4_buffer_push(pixels, gimg_get_pixel_vec4(img, x, y));
+      mif_Vector4_buffer_push(pixels, gimg_get_pixel_vec4(img, x, y));
     }
   }
 
