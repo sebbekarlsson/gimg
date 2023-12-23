@@ -34,7 +34,7 @@ typedef struct {
 
 int gimg_read_from_path(GIMG *image, const char *path);
 
-int gimg_downscale(GIMG image, float scale, const char* out_path);
+int gimg_downscale(GIMG image, float scale, bool keep_aspect_ratio, const char* out_path);
 
 void gimg_free(GIMG* image, unsigned int completely);
 

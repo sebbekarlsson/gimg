@@ -91,7 +91,7 @@ static void downscale_callback(const char *path, DownscaleArgs args) {
   sprintf(newstr, template, without_ext, next_ext);
 
   printf("Downscaling `%s`\n", path);
-  if (gimg_downscale(image, args.scale, newstr)) {
+  if (gimg_downscale(image, args.scale, true, newstr)) {
     printf("Wrote `%s`\n", newstr);
   }
 
@@ -110,48 +110,50 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Please specify input file.\n");
     return 1;
   }
-
+//
   GIMG gimg = {0};
-
+//
   if (!gimg_read_from_path(&gimg, argv[1])) {
     fprintf(stderr, "Failed to read image.\n");
     return 1;
   }
 
-  if (!gimg_serialize_to_path(gimg, "serialized.gimg")) {
-    fprintf(stderr, "Failed to serialize.\n");
-    return 1;
-  }
-
+  gimg_downscale(gimg, 0.5f, false, "./small.png");
+//
+//  if (!gimg_serialize_to_path(gimg, "serialized.gimg")) {
+//    fprintf(stderr, "Failed to serialize.\n");
+//    return 1;
+//  }
+//
   gimg_free(&gimg, 0);
-  
-  GIMG next_gimg = {0};
-  
-  if (!gimg_deserialize_from_path(&next_gimg, "serialized.gimg")) {
-    fprintf(stderr, "Failed to de-serialize!\n");
-    return 1;
-    }
-
-  
-  if (!gimg_save(next_gimg, "deserialized.png", false)) {
-    fprintf(stderr, "Failed to save image.\n");
-    return 1;
-    }
-  
-  printf("Done!\n");
-  gimg_free(&next_gimg, 0);
-  return 0;
-  
-  if (cliparse_has_arg(argc, argv, "--downscale") &&
-      cliparse_has_arg(argc, argv, "--dir")) {
-    const char *dir = cliparse_get_arg_string(argc, argv, "--dir");
-    const char *ext = cliparse_get_arg_string(argc, argv, "--ext");
-    float scale = cliparse_get_arg_float(argc, argv, "--downscale");
-
-    if (!downscale(ext, dir, scale))
-      return 1;
-    return 0;
-  }
+//  
+//  GIMG next_gimg = {0};
+//  
+//  if (!gimg_deserialize_from_path(&next_gimg, "serialized.gimg")) {
+//    fprintf(stderr, "Failed to de-serialize!\n");
+//    return 1;
+//    }
+//
+//  
+//  if (!gimg_save(next_gimg, "deserialized.png", false)) {
+//    fprintf(stderr, "Failed to save image.\n");
+//    return 1;
+//    }
+//  
+//  printf("Done!\n");
+//  gimg_free(&next_gimg, 0);
+//  return 0;
+//  
+//  if (cliparse_has_arg(argc, argv, "--downscale") &&
+//      cliparse_has_arg(argc, argv, "--dir")) {
+//    const char *dir = cliparse_get_arg_string(argc, argv, "--dir");
+//    const char *ext = cliparse_get_arg_string(argc, argv, "--ext");
+//    float scale = cliparse_get_arg_float(argc, argv, "--downscale");
+//
+//    if (!downscale(ext, dir, scale))
+//      return 1;
+//    return 0;
+//  }
 
   return 0;
 }

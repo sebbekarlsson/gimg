@@ -531,7 +531,7 @@ int gimg_fill(GIMG* img, GIMGPixel pixel) {
 }
 
 
-int gimg_downscale(GIMG image, float scale, const char *out_path) {
+int gimg_downscale(GIMG image, float scale, bool keep_aspect_ratio, const char *out_path) {
   if (!gimg_validate(image)) return 0;
   if (scale <= 0.0f) return 0;
   if (!out_path) return 0;
@@ -540,9 +540,17 @@ int gimg_downscale(GIMG image, float scale, const char *out_path) {
   int w = image.width;
   int h = image.height;
 
-  int dest_w = (int)roundf(w * scale);
-  int dest_h = (int)roundf(h * scale);
+  int dest_w = 0;
+  int dest_h = 0;
 
+  if (keep_aspect_ratio) {
+    dest_w = (int)roundf(w * scale);
+    dest_h = (int)roundf(h * scale);
+  } else {
+    int s = MIN(w, h);
+    dest_w = (int)roundf(s * scale);
+    dest_h = (int)roundf(s * scale);
+  }
   if (dest_w <= 0 || dest_h <= 0) {
     fprintf(stderr, "Unable to downscale to `%dx%d`.\n", dest_w, dest_h);
   }
