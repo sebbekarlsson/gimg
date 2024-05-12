@@ -447,6 +447,17 @@ int gimg_get_pixel(GIMG* img, int x, int y, GIMGPixel* out) {
   return 1;
 }
 
+uint32_t gimg_get_pixel_uint32(GIMG* img, int x, int y) {
+  if (!img) return 0;
+  if (!img->data) return 0;
+  if (!gimg_validate(*img)) return 0;
+  x = x % img->width;
+  y = y % img->height;
+  int max_idx = (img->width * img->height);
+  int idx = (x + img->width * y) % max_idx;
+  return ((uint32_t*)img->data)[idx];
+}
+
 int gimg_get_pixel_rgb(GIMG* img, int x, int y, GIMGPixelRGB* out) {
   if (!img) return 0;
   if (!out) return 0;

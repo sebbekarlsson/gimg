@@ -46,6 +46,7 @@ int gimg_make(GIMG* img, int width, int height, int components);
 
 
 Vector4 gimg_get_pixel_vec4(GIMG* gimg, int x, int y);
+uint32_t gimg_get_pixel_uint32(GIMG* gimg, int x, int y);
 int gimg_set_pixel_vec4(GIMG* gimg, int x, int y, Vector4 pixel);
 int gimg_set_pixel(GIMG* img, int x, int y, GIMGPixel pixel);
 int gimg_get_pixel(GIMG* gimg, int x, int y, GIMGPixel* out);
